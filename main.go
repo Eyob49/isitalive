@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,7 +35,7 @@ func isValidURL(input string) bool {
 
 	scheme := strings.ToLower(u.Scheme)
 
-	return scheme == "http" || scheme == "https" && u.Host != ""
+	return (scheme == "http" || scheme == "https") && u.Hostname() != ""
 }
 
 func handlerHealthz(w http.ResponseWriter, _ *http.Request) {
@@ -78,7 +79,11 @@ func handlerCheck(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
-		respondWithError(w, 400, "request failed or timed out")
+		if errors.Is(err, context.DeadlineExceeded) {
+			respondWithError(w, 504, "timed out")
+			return
+		}
+		respondWithError(w, 502, "request failed")
 		return
 	}
 	defer resp.Body.Close()
