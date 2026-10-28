@@ -64,6 +64,26 @@ func TestHandlerCheck_InvalidInput(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, 400, resp.StatusCode)
+
+	body = strings.NewReader(`{"url":"https://example.com"} {"url":"https://example.org"}`)
+	req = httptest.NewRequest(http.MethodPost, "https://example.com", body)
+	w = httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp = w.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	body = strings.NewReader(`{"url":"https://example.com"} garbage`)
+	req = httptest.NewRequest(http.MethodPost, "https://example.com", body)
+	w = httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp = w.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
 }
 
 func TestHandlerCheck_Success(t *testing.T) {

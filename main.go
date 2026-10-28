@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -56,8 +57,19 @@ func handlerCheck(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameter{}
+
 	if err := decoder.Decode(&params); err != nil {
 		respondWithError(w, 400, "error decoding json")
+		return
+	}
+
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		if err == nil {
+			respondWithError(w, 400, "body must contain only a single JSON value")
+			return
+		}
+
+		respondWithError(w, 400, "invalid data after JSON value")
 		return
 	}
 
