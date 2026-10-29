@@ -171,3 +171,15 @@ func TestHandlerCheck_Timeout(t *testing.T) {
 
 	assert.Equal(t, http.StatusGatewayTimeout, resp.StatusCode)
 }
+
+func TestHandlerCheck_RequestFailure(t *testing.T) {
+	body := strings.NewReader(`{"url":"http://127.0.0.1:1"}`)
+	req := httptest.NewRequest(http.MethodPost, "https://example.com", body)
+	w := httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, 502, resp.StatusCode)
+}
