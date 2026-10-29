@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -122,4 +123,51 @@ func TestHandlerCheck_OversizedBody(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, 413, resp.StatusCode)
+}
+
+func handlerServiceUnavailable(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusServiceUnavailable)
+}
+
+func TestHandlerCheck_ServiceUnavailable(t *testing.T) {
+	type parameter struct {
+		StatusCode int `json:"status_code"`
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(handlerServiceUnavailable))
+	defer ts.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"url":"`+ts.URL+`"}`))
+	w := httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+	decoder := json.NewDecoder(resp.Body)
+	params := parameter{}
+	if err := decoder.Decode(&params); err != nil {
+		t.Fatalf("error decoding json: %v", err)
+	}
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http.StatusServiceUnavailable, params.StatusCode)
+}
+
+func handlerTimeOut(w http.ResponseWriter, _ *http.Request) {
+	time.Sleep(11 * time.Second)
+	w.WriteHeader(http.StatusGatewayTimeout)
+}
+
+func TestHandlerCheck_Timeout(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(handlerTimeOut))
+	defer ts.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"url":"`+ts.URL+`"}`))
+	w := httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusGatewayTimeout, resp.StatusCode)
 }
