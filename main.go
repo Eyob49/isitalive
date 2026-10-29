@@ -18,6 +18,10 @@ type CheckResponse struct {
 	ResponseTimeMS int64  `json:"response_time_ms"`
 }
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	dat, err := json.Marshal(payload)
 	if err != nil {
@@ -31,7 +35,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
-	respondWithJSON(w, code, map[string]string{"error": msg})
+	respondWithJSON(w, code, ErrorResponse{Error: msg})
 }
 
 func isValidURL(input string) bool {
