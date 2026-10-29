@@ -12,6 +12,12 @@ import (
 	"time"
 )
 
+type CheckResponse struct {
+	URL            string `json:"url"`
+	StatusCode     int    `json:"status_code"`
+	ResponseTimeMS int64  `json:"response_time_ms"`
+}
+
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	dat, err := json.Marshal(payload)
 	if err != nil {
@@ -112,10 +118,10 @@ func handlerCheck(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	endTime := time.Since(startTime)
 
-	respondWithJSON(w, 200, map[string]any{
-		"url":              params.URL,
-		"status_code":      resp.StatusCode,
-		"response_time_ms": endTime.Milliseconds(),
+	respondWithJSON(w, http.StatusOK, CheckResponse{
+		URL:            params.URL,
+		StatusCode:     resp.StatusCode,
+		ResponseTimeMS: endTime.Milliseconds(),
 	})
 }
 
