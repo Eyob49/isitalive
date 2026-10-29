@@ -45,6 +45,10 @@ func handlerHealthz(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+var client = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
 func handlerCheck(w http.ResponseWriter, r *http.Request) {
 	type parameter struct {
 		URL string `json:"url"`
@@ -86,7 +90,6 @@ func handlerCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &http.Client{}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
