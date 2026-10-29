@@ -50,15 +50,23 @@ func handlerCheck(w http.ResponseWriter, r *http.Request) {
 		URL string `json:"url"`
 	}
 
+	const maxBytes = 1 << 20
+
 	if r.Method != http.MethodPost {
 		respondWithError(w, 405, "method not allowed")
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	params := parameter{}
 
 	if err := decoder.Decode(&params); err != nil {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			respondWithError(w, 413, "Payload too large (max 1 MB)")
+			return
+		}
 		respondWithError(w, 400, "error decoding json")
 		return
 	}

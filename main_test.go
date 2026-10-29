@@ -111,3 +111,15 @@ func TestHandlerCheck_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, params.StatusCode)
 	assert.GreaterOrEqual(t, params.ResponseTimeMS, int64(0))
 }
+
+func TestHandlerCheck_OversizedBody(t *testing.T) {
+	body := `{"url":"https://example.com","padding":"` + strings.Repeat("a", 1<<20) + `"}`
+	req := httptest.NewRequest(http.MethodPost, "https://example.com", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	handlerCheck(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, 413, resp.StatusCode)
+}
