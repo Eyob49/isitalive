@@ -1,0 +1,9 @@
+POST http://localhost:8080/check
+Content-Type: application/json
+
+{
+    "url": "https://example.com"
+}
+
+###
+GET http://localhost:8080/checks
