@@ -160,13 +160,26 @@ func (cfg *apiConfig) handlerGetChecks(w http.ResponseWriter, r *http.Request) {
 	if l := r.URL.Query().Get("limit"); l != "" {
 		parsedLimit, err := strconv.Atoi(l)
 		if err != nil || parsedLimit < 1 || parsedLimit > 100 {
-			respondWithError(w, http.StatusBadRequest, "invalid limit parameter (must be between 1 and 100) ")
+			respondWithError(w, http.StatusBadRequest, "invalid limit parameter (must be between 1 and 100)")
 			return
 		}
 		limit = int32(parsedLimit)
 	}
 
-	checks, err := cfg.queries.GetChecks(r.Context(), limit)
+	offset := int32(0) // Default Offset
+	if o := r.URL.Query().Get("offset"); o != "" {
+		parsedOffset, err := strconv.Atoi(o)
+		if err != nil || parsedOffset < 0 {
+			respondWithError(w, http.StatusBadRequest, "invalid offset parameter (must be 0 or greater)")
+			return
+		}
+		offset = int32(parsedOffset)
+	}
+
+	checks, err := cfg.queries.GetChecks(r.Context(), database.GetChecksParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to retrieve checks")
 		return

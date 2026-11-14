@@ -35,14 +35,20 @@ func (q *Queries) CreateCheck(ctx context.Context, arg CreateCheckParams) (Check
 }
 
 const getChecks = `-- name: GetChecks :many
-SELECT id, url, status_code, response_time_ms, checked_at 
+SELECT id, url, status_code, response_time_ms, checked_at
 FROM checks
-ORDER BY checked_at DESC
+ORDER BY checked_at DESC, id DESC
 LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) GetChecks(ctx context.Context, limit int32) ([]Check, error) {
-	rows, err := q.db.QueryContext(ctx, getChecks, limit)
+type GetChecksParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetChecks(ctx context.Context, arg GetChecksParams) ([]Check, error) {
+	rows, err := q.db.QueryContext(ctx, getChecks, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,8 @@ VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetChecks :many
-SELECT id, url, status_code, response_time_ms, checked_at 
+SELECT id, url, status_code, response_time_ms, checked_at
 FROM checks
-ORDER BY checked_at DESC
-LIMIT $1;
+ORDER BY checked_at DESC, id DESC
+LIMIT $1
+OFFSET $2;
